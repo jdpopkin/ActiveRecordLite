@@ -11,8 +11,8 @@ class AssocParams
 end
 
 class BelongsToAssocParams < AssocParams
-  attr_accessor :name, :other_class_name, :primary_key, :foreign_key,
-   :other_class, :other_table_name # idk about this
+  attr_accessor :name, :other_class_name, :primary_key, :foreign_key
+   #:other_class, :other_table_name # idk about this
 
   def initialize(name, params)
     self.name = name
@@ -35,8 +35,17 @@ class BelongsToAssocParams < AssocParams
       self.foreign_key = params[:foreign_key].to_s
     end
 
-    self.other_class = other_class_name.to_s.constantize
-    self.other_table_name = other_class.table_name
+
+    # self.other_class = other_class_name.to_s.constantize
+#     self.other_table_name = other_class.table_name
+  end
+
+  def other_class
+    other_class_name.to_s.constantize
+  end
+
+  def other_table_name
+    other_class.table_name
   end
 
   def type
@@ -81,15 +90,13 @@ end
 
 module Associatable
   def assoc_params
-    @assoc_params
+    @assoc_params ||= {} # really?
   end
 
   def belongs_to(name, params = {})
-    self.send(:define_method, "#{name}") do #|name, params|
-      belongs_instance = BelongsToAssocParams.new(name, params)
-      #self.instance_variable_set(:@assoc_params, belongs_instance)
-      self.class.instance_variable_set(:@assoc_params, belongs_instance)
+    belongs_instance = BelongsToAssocParams.new(name, params)
 
+    self.send(:define_method, "#{name}") do #|name, params|
       # make query and get hashes back
       # foreign key stored on our side.
       # TODO: Is all that self.send drama necessary?
@@ -100,6 +107,33 @@ module Associatable
       SQL
 
       belongs_instance.other_class.parse_all(hashes).first
+    end
+
+    assoc_hash = self.assoc_params
+    assoc_hash[belongs_instance.name] = belongs_instance
+  end
+
+  def has_one_through(name, assoc1, assoc2)
+    #through_params = self.assoc_params[assoc1]
+    self.send(:define_method, "#{name}") do
+      # you don't even need a new kind of instance i bet. just be smart with
+      # the two you have.
+      #p "Z"
+
+      through_params = self.class.assoc_params[assoc1]
+
+      has_params = through_params.other_class.assoc_params[assoc2]
+
+      hashes = DBConnection.execute(<<-SQL, self.send(:id)) # id?
+      SELECT #{has_params.other_table_name}.*
+      FROM #{has_params.other_table_name}
+      JOIN #{through_params.other_table_name}
+      ON #{has_params.other_table_name}.#{has_params.primary_key} = #{through_params.other_table_name}.#{has_params.foreign_key}
+      JOIN #{self.class.table_name}
+      ON #{self.class.table_name}.#{through_params.foreign_key} = #{through_params.other_table_name}.#{through_params.primary_key}
+      WHERE #{self.class.table_name}.id = ? -- really?
+      SQL
+      has_params.other_class.parse_all(hashes).first
     end
   end
 
@@ -118,9 +152,5 @@ module Associatable
 
       has_instance.other_class.parse_all(hashes)
     end
-  end
-
-  def has_one_through(name, assoc1, assoc2)
-
   end
 end
