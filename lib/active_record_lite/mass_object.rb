@@ -18,6 +18,11 @@ class MassObject
   end
 
   def self.parse_all(results)
+    objects = []
+    results.each do |result|
+      objects << new(result)
+    end
+    objects
   end
 
   def initialize(params = {})
