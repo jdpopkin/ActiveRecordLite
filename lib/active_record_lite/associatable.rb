@@ -32,7 +32,7 @@ class BelongsToAssocParams < AssocParams
     if params[:foreign_key].nil?
       self.foreign_key = name.to_s + "_id"
     else
-      self.foreign_key = params[:foreign_key]
+      self.foreign_key = params[:foreign_key].to_s
     end
 
     self.other_class = other_class_name.to_s.constantize
@@ -63,10 +63,12 @@ module Associatable
 
 
       # make query and get hashes back
-      hashes = DBConnection.execute(<<-SQL, self.id)
+      # TODO: is this searching the right table?
+      # foreign key stored on our side.
+      hashes = DBConnection.execute(<<-SQL, self.send(belongs_instance.foreign_key))
       SELECT *
       FROM #{belongs_instance.other_table_name}
-      WHERE #{belongs_instance.foreign_key} = ?
+      WHERE #{belongs_instance.primary_key} = ?
       SQL
 
       belongs_instance.other_class.parse_all(hashes).first
