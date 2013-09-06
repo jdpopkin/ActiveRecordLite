@@ -31,7 +31,7 @@ class MassObject
       if self.class.attributes.include?(attr_name.to_sym) # black magic; check
         self.send("#{attr_name}=", value)
       else
-        raise GeneralError.new("mass assignment to unregistered attribute #{attr_name}")
+        raise Exception.new("mass assignment to unregistered attribute #{attr_name}")
       end
     end
   end
