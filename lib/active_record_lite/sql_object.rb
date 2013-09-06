@@ -40,6 +40,18 @@ class SQLObject < MassObject
   end
 
   def create
+    attrib_names = self.class.attributes - [:id]
+    attrib_name_string = attrib_names.join(", ")
+    qmark_string = ("?, " * attrib_names.count)[0...-2]
+    attrib_vals = attrib_names.map { |name| self.send(name) }
+
+    DBConnection.execute(<<-SQL, *attrib_vals)
+     INSERT INTO #{self.class.table_name} (#{attrib_name_string})
+     VALUES
+     (#{qmark_string})
+     SQL
+     @id = DBConnection.last_insert_row_id
+     self
   end
 
   def update
