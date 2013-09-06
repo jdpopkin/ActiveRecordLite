@@ -28,6 +28,15 @@ class SQLObject < MassObject
   end
 
   def self.find(id)
+    hash = DBConnection.execute(<<-SQL, id)
+    SELECT *
+    FROM #{@table_name}
+    WHERE
+    id = ?
+    SQL
+
+    return nil if hash.empty?
+    self.new(hash.first)
   end
 
   def create

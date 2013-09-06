@@ -5,12 +5,12 @@ class MassObject
 
   def self.my_attr_accessible(*attributes)
     attributes.each do |attribute|
-      attr_accessor(attribute)
+      attr_accessor(attribute.to_sym) # no to_sym?
     end
 
     # get all attributes?
     # self.instance_variables
-    @attributes = attributes
+    @attributes = attributes.map(&:to_sym) #no map?
   end
 
   def self.attributes
@@ -22,6 +22,7 @@ class MassObject
 
   def initialize(params = {})
     params.each do |attr_name, value|
+      # proper
       if self.class.attributes.include?(attr_name.to_sym) # black magic; check
         self.send("#{attr_name}=", value)
       else
