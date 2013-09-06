@@ -40,10 +40,8 @@ class SQLObject < MassObject
   end
 
   def create
-    attrib_names = self.class.attributes - [:id]
+    attrib_names, qmark_string, attrib_vals = strings_and_attribs
     attrib_name_string = attrib_names.join(", ")
-    qmark_string = ("?, " * attrib_names.count)[0...-2]
-    attrib_vals = attrib_names.map { |name| self.send(name) }
 
     DBConnection.execute(<<-SQL, *attrib_vals)
      INSERT INTO #{self.class.table_name} (#{attrib_name_string})
@@ -55,9 +53,28 @@ class SQLObject < MassObject
   end
 
   def update
+    # query db
+    attrib_names, qmark_string, attrib_vals = strings_and_attribs
+    attrib_name_string = attrib_names.join(" = ?, ") << " = ?"
+    attrib_vals << self.id
+
+    DBConnection.execute(<<-SQL, *attrib_vals)
+    UPDATE #{self.class.table_name}
+    SET #{attrib_name_string}
+    WHERE id = ?
+    SQL
+  end
+
+  def strings_and_attribs
+    attrib_names = self.class.attributes - [:id]
+    qmark_string = ("?, " * attrib_names.count)[0...-2]
+    attrib_vals = attrib_names.map { |name| self.send(name) }
+    [attrib_names, qmark_string, attrib_vals]
   end
 
   def save
+    self.create if self.id.nil?
+    self.update unless self.id.nil?
   end
 
   def attribute_values

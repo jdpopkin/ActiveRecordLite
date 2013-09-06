@@ -25,5 +25,9 @@ end
 c = Cat.new(:name => "Gizmo", :owner_id => 1)
 c.create
 p c
-#c.save # create
+c.name = "Pickles"
+c.update
+p c
+d = Cat.find(c.id)
+p d
 #c.save # update
