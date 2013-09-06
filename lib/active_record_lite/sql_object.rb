@@ -6,6 +6,8 @@ require_relative './searchable'
 class SQLObject < MassObject
   extend Searchable
   extend Associatable
+  #my_attr_accessible :assoc_params
+  @assoc_params = nil
   def self.set_table_name(table_name)
     @table_name = table_name
 

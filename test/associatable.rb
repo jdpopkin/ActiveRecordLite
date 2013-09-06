@@ -29,6 +29,8 @@ end
 cat = Cat.find(1)
 p cat
 p cat.human
+p Cat.assoc_params
+#p cat
 
 human = Human.find(1)
 p human.cats

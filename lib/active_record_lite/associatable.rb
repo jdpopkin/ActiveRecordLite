@@ -81,12 +81,14 @@ end
 
 module Associatable
   def assoc_params
+    @assoc_params
   end
 
   def belongs_to(name, params = {})
     self.send(:define_method, "#{name}") do #|name, params|
       belongs_instance = BelongsToAssocParams.new(name, params)
-
+      #self.instance_variable_set(:@assoc_params, belongs_instance)
+      self.class.instance_variable_set(:@assoc_params, belongs_instance)
 
       # make query and get hashes back
       # foreign key stored on our side.
@@ -105,12 +107,12 @@ module Associatable
     self.send(:define_method, "#{name}") do
       has_instance = HasManyAssocParams.new(name, params, self.class)
 
+
       hashes = DBConnection.execute(<<-SQL, self.id) # FIX THIS
       SELECT #{has_instance.other_table_name}.*
       FROM #{self.class.table_name}
       JOIN #{has_instance.other_table_name}
-      ON #{has_instance.foreign_key} =
-       #{self.class.table_name}.#{has_instance.primary_key}
+      ON #{has_instance.foreign_key} = #{self.class.table_name}.#{has_instance.primary_key}
       WHERE #{has_instance.foreign_key} = ?
       SQL
 
@@ -119,5 +121,6 @@ module Associatable
   end
 
   def has_one_through(name, assoc1, assoc2)
+
   end
 end
