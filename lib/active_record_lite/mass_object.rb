@@ -22,7 +22,7 @@ class MassObject
 
   def initialize(params = {})
     params.each do |attr_name, value|
-      if self.class.attributes.include?(attr_name) # black magic; check
+      if self.class.attributes.include?(attr_name.to_sym) # black magic; check
         self.send("#{attr_name}=", value)
       else
         raise GeneralError.new("mass assignment to unregistered attribute #{attr_name}")

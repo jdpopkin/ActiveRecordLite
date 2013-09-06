@@ -5,12 +5,26 @@ require_relative './searchable'
 
 class SQLObject < MassObject
   def self.set_table_name(table_name)
+    @table_name = table_name
+
+    # TODO: use active_support/inflector to supply default value
   end
 
   def self.table_name
+    @table_name
   end
 
   def self.all
+    hashes = DBConnection.execute(<<-SQL)
+    SELECT *
+    FROM #{@table_name}
+    SQL
+
+    object_arr = []
+    hashes.each do |hash|
+      object_arr << self.new(hash)
+    end
+    object_arr
   end
 
   def self.find(id)
